@@ -1,0 +1,38 @@
+{
+  "info": {
+    "name": "demo-fresh-payments-api",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "List Transactions",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/transactions"
+      }
+    },
+    {
+      "name": "Create Transaction",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"orderId\":\"ord-101\",\"amount\":149.99,\"method\":\"card\"}"
+        },
+        "url": "{{baseUrl}}/transactions"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8082"
+    }
+  ]
+}
