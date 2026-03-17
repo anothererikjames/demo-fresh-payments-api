@@ -1,22 +1,383 @@
 openapi: 3.0.3
 info:
-  title: Demo Fresh Payments API
+  title: Fresh Payments API
+  description: API for managing transactions, refunds, and payment methods.
   version: 1.0.0
+servers:
+  - url: https://api.example.com/v1
 paths:
   /transactions:
     get:
       summary: List transactions
+      operationId: listTransactions
+      parameters:
+        - name: orderId
+          in: query
+          schema:
+            type: string
+          description: Filter transactions by order ID
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [completed, pending, failed]
+          description: Filter by transaction status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
       responses:
-        '200':
-          description: OK
+        "200":
+          description: A list of transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Transaction"
+                  total:
+                    type: integer
+                    example: 87
     post:
-      summary: Create transaction
+      summary: Create a transaction
+      operationId: createTransaction
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
+              $ref: "#/components/schemas/TransactionCreate"
       responses:
-        '201':
-          description: Created
+        "201":
+          description: Transaction created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+        "400":
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /transactions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          example: txn_a1b2c3
+    get:
+      summary: Get a transaction by ID
+      operationId: getTransaction
+      responses:
+        "200":
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+        "404":
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /refunds:
+    get:
+      summary: List refunds
+      operationId: listRefunds
+      parameters:
+        - name: transactionId
+          in: query
+          schema:
+            type: string
+          description: Filter refunds by transaction ID
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [approved, pending, rejected]
+          description: Filter by refund status
+      responses:
+        "200":
+          description: A list of refunds
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Refund"
+    post:
+      summary: Create a refund
+      operationId: createRefund
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefundCreate"
+      responses:
+        "201":
+          description: Refund created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Refund"
+  /refunds/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          example: ref_x1y2z3
+    get:
+      summary: Get a refund by ID
+      operationId: getRefund
+      responses:
+        "200":
+          description: Refund details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Refund"
+        "404":
+          description: Refund not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /payment-methods:
+    get:
+      summary: List payment methods
+      operationId: listPaymentMethods
+      parameters:
+        - name: customerId
+          in: query
+          schema:
+            type: string
+          description: Filter by customer ID
+      responses:
+        "200":
+          description: A list of payment methods
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PaymentMethod"
+    post:
+      summary: Add a payment method
+      operationId: createPaymentMethod
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentMethodCreate"
+      responses:
+        "201":
+          description: Payment method added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentMethod"
+  /payment-methods/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          example: pm_card_01
+    get:
+      summary: Get a payment method by ID
+      operationId: getPaymentMethod
+      responses:
+        "200":
+          description: Payment method details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentMethod"
+        "404":
+          description: Payment method not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Remove a payment method
+      operationId: deletePaymentMethod
+      responses:
+        "204":
+          description: Payment method removed
+        "404":
+          description: Payment method not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          example: txn_a1b2c3
+        orderId:
+          type: string
+          example: ord_abc123
+        amount:
+          type: number
+          format: double
+          example: 129.99
+        currency:
+          type: string
+          example: USD
+        status:
+          type: string
+          enum: [completed, pending, failed]
+          example: completed
+        method:
+          type: string
+          example: credit_card
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-03-10T14:32:00Z"
+      required: [id, orderId, amount, currency, status, method]
+    TransactionCreate:
+      type: object
+      properties:
+        orderId:
+          type: string
+          example: ord_abc123
+        amount:
+          type: number
+          format: double
+          example: 129.99
+        currency:
+          type: string
+          example: USD
+        method:
+          type: string
+          example: credit_card
+        paymentMethodId:
+          type: string
+          example: pm_card_01
+      required: [orderId, amount, currency, method]
+    Refund:
+      type: object
+      properties:
+        id:
+          type: string
+          example: ref_x1y2z3
+        transactionId:
+          type: string
+          example: txn_a1b2c3
+        amount:
+          type: number
+          format: double
+          example: 29.99
+        reason:
+          type: string
+          example: Item damaged during shipping
+        status:
+          type: string
+          enum: [approved, pending, rejected]
+          example: approved
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-03-12T10:00:00Z"
+      required: [id, transactionId, amount, reason, status]
+    RefundCreate:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          example: txn_a1b2c3
+        amount:
+          type: number
+          format: double
+          example: 29.99
+        reason:
+          type: string
+          example: Item damaged during shipping
+      required: [transactionId, amount, reason]
+    PaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+          example: pm_card_01
+        customerId:
+          type: string
+          example: cust_001
+        type:
+          type: string
+          enum: [credit_card, debit_card, paypal, bank_transfer]
+          example: credit_card
+        last4:
+          type: string
+          example: "4242"
+          description: Last 4 digits of card number (for card types)
+        email:
+          type: string
+          example: user@example.com
+          description: Email address (for PayPal type)
+        expiresAt:
+          type: string
+          format: date
+          example: "2028-12-01"
+          description: Expiration date (for card types)
+      required: [id, customerId, type]
+    PaymentMethodCreate:
+      type: object
+      properties:
+        customerId:
+          type: string
+          example: cust_001
+        type:
+          type: string
+          enum: [credit_card, debit_card, paypal, bank_transfer]
+          example: credit_card
+        last4:
+          type: string
+          example: "4242"
+        email:
+          type: string
+          example: user@example.com
+        expiresAt:
+          type: string
+          format: date
+          example: "2028-12-01"
+      required: [customerId, type]
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 404
+        message:
+          type: string
+          example: Resource not found
